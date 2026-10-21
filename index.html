@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- ===================== EDIT THESE ===================== -->
+<title>You're Invited!</title>
+<meta name="description" content="Tap to open your invitation and RSVP.">
+<!-- Link preview when you text/email the link. Replace YOUR-SITE with your real address after hosting. -->
+<meta property="og:title" content="You're Invited!">
+<meta property="og:description" content="Tap to open your invitation and RSVP.">
+<meta property="og:image" content="https://YOUR-SITE.netlify.app/invite.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<!-- ====================================================== -->
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    /* Change --accent to match your invitation's main color */
+    --accent:#d9546b;
+    --accent-ink:#ffffff;
+    --bg:#f6efe6;
+    --paper:#fffaf3;
+    --ink:#2b2420;
+    --muted:#7a6e66;
+    --line:#e6dccf;
+    --envelope:#e9dcc8;
+    --envelope-dark:#d8c7ae;
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:'Nunito',system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #fff 0%, transparent 60%),
+      var(--bg);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:700;margin:0}
+
+  /* ---------- Envelope intro ---------- */
+  .intro{
+    position:fixed;inset:0;z-index:20;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+    background:var(--bg);
+    transition:opacity .7s ease .9s, visibility 0s linear 1.6s;
+  }
+  .intro.opened{opacity:0;visibility:hidden}
+  .env-wrap{perspective:1200px;cursor:pointer;outline:none}
+  .envelope{
+    position:relative;width:min(82vw,360px);aspect-ratio:3/2;
+    background:var(--envelope);border-radius:10px;
+    box-shadow:0 30px 60px -20px rgba(60,40,20,.35),0 8px 18px -8px rgba(60,40,20,.25);
+    transition:transform .6s cubic-bezier(.2,.8,.2,1);
+  }
+  .env-wrap:hover .envelope{transform:translateY(-4px) rotate(-.5deg)}
+  .envelope::before,.envelope::after{ /* side folds */
+    content:"";position:absolute;inset:0;border-radius:10px;
+    background:
+      linear-gradient(to top right, transparent 49.5%, var(--envelope-dark) 50%) left/50% 100% no-repeat,
+      linear-gradient(to top left,  transparent 49.5%, var(--envelope-dark) 50%) right/50% 100% no-repeat;
+    opacity:.55;
+  }
+  .envelope::after{ /* bottom fold */
+    background:linear-gradient(to bottom, transparent 49.5%, var(--envelope-dark) 50%) bottom/100% 100% no-repeat;
+    clip-path:polygon(0 100%,50% 45%,100% 100%);opacity:.8;
+  }
+  .flap{
+    position:absolute;left:0;right:0;top:0;height:62%;
+    background:var(--envelope-dark);
+    clip-path:polygon(0 0,100% 0,50% 100%);
+    transform-origin:top;transition:transform .8s cubic-bezier(.6,0,.2,1);
+    z-index:3;border-radius:10px 10px 0 0;
+  }
+  .seal{
+    position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);
+    width:64px;height:64px;border-radius:50%;z-index:4;
+    background:radial-gradient(circle at 35% 30%, color-mix(in srgb,var(--accent) 70%,#fff) 0%, var(--accent) 55%, color-mix(in srgb,var(--accent) 70%,#000) 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.25), inset 0 -3px 6px rgba(0,0,0,.2);
+    display:grid;place-items:center;color:#fff;font-size:26px;
+    transition:transform .5s ease, opacity .4s ease;
+  }
+  .opened .flap{transform:rotateX(180deg)}
+  .opened .seal{transform:translate(-50%,-50%) scale(.2);opacity:0}
+  .opened .envelope{transform:translateY(30px) scale(.96)}
+  .tap{
+    font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:var(--muted);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{50%{opacity:.4}}
+
+  /* ---------- Main ---------- */
+  main{max-width:560px;margin:0 auto;padding:28px 16px 64px}
+  .card{
+    background:var(--paper);border-radius:var(--radius);
+    box-shadow:0 24px 50px -24px rgba(60,40,20,.35),0 2px 6px rgba(60,40,20,.08);
+    overflow:hidden;
+    opacity:0;transform:translateY(40px) scale(.98);
+    transition:opacity .9s ease, transform .9s cubic-bezier(.2,.8,.2,1);
+  }
+  .revealed .card{opacity:1;transform:none}
+  .invite-img{display:block;width:100%;height:auto}
+
+  .rsvp{padding:28px 22px 30px}
+  .rsvp h2{font-size:30px;text-align:center}
+  .sub{text-align:center;color:var(--muted);margin:6px 0 22px}
+  label.lbl{display:block;font-weight:700;font-size:14px;margin:18px 0 8px}
+  .opt{font-weight:400;color:var(--muted)}
+  input[type=text],input[type=email],input[type=tel],textarea{
+    width:100%;font:inherit;font-size:16px;color:var(--ink);
+    padding:13px 14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+  textarea{min-height:84px;resize:vertical}
+
+  .choice{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .choice button{
+    font:inherit;font-weight:700;font-size:16px;padding:16px 10px;border-radius:14px;cursor:pointer;
+    border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:all .2s;
+  }
+  .choice button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);transform:translateY(-1px);box-shadow:0 8px 18px -8px var(--accent)}
+
+  .counts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stepper{border:1.5px solid var(--line);border-radius:14px;background:#fff;padding:10px 12px}
+  .stepper span.t{display:block;font-size:13px;color:var(--muted);font-weight:700}
+  .stepper .row{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+  .stepper button{width:36px;height:36px;border-radius:50%;border:none;background:var(--bg);font-size:20px;font-weight:700;cursor:pointer;color:var(--ink)}
+  .stepper output{font-size:22px;font-weight:700;font-family:'Fraunces',serif}
+
+  .attending-only{overflow:hidden;transition:max-height .45s ease, opacity .3s ease;max-height:900px}
+  .attending-only.hide{max-height:0;opacity:0}
+
+  .submit{
+    margin-top:26px;width:100%;font:inherit;font-weight:700;font-size:17px;
+    padding:16px;border:none;border-radius:14px;cursor:pointer;
+    background:var(--ink);color:#fff;transition:transform .15s, opacity .2s;
+  }
+  .submit:active{transform:scale(.98)}
+  .submit:disabled{opacity:.55;cursor:wait}
+  .err{color:#b3261e;font-size:14px;margin-top:10px;min-height:1em;text-align:center}
+
+  .thanks{display:none;text-align:center;padding:40px 22px 44px}
+  .thanks .big{font-size:56px;line-height:1}
+  .thanks h2{font-size:30px;margin:14px 0 8px}
+  .thanks p{color:var(--muted);margin:0 0 20px}
+  .link-btn{background:none;border:none;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
+  .done .rsvp{display:none}.done .thanks{display:block}
+
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
+
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:30}
+
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="intro" id="intro">
+  <div class="env-wrap" id="env" role="button" tabindex="0" aria-label="Open invitation">
+    <div class="envelope"><div class="flap"></div><div class="seal">♥</div></div>
+  </div>
+  <div class="tap">Tap to open</div>
+</div>
+
+<main>
+  <div class="card" id="card">
+    <!-- Your designed invitation. Name the file invite.jpg (or change src). Put the party details in alt text for screen readers. -->
+    <img class="invite-img" src="invite.jpg" alt="Birthday party invitation">
+
+    <form class="rsvp" id="form" novalidate>
+      <h2>Kindly RSVP</h2>
+      <p class="sub" id="rsvpBy">Let us know if you can make it!</p>
+
+      <label class="lbl" for="name">Your name</label>
+      <input type="text" id="name" name="name" autocomplete="name" placeholder="e.g. The Garcia Family" required>
+
+      <label class="lbl">Will you be joining us?</label>
+      <div class="choice" role="group">
+        <button type="button" data-v="Yes" aria-pressed="false">🎉 Yes!</button>
+        <button type="button" data-v="No" aria-pressed="false">😢 Can't make it</button>
+      </div>
+
+      <div class="attending-only hide" id="yesFields">
+        <label class="lbl">How many are coming?</label>
+        <div class="counts">
+          <div class="stepper" data-k="adults"><span class="t">Adults</span><div class="row"><button type="button" data-d="-1" aria-label="Fewer adults">−</button><output>1</output><button type="button" data-d="1" aria-label="More adults">+</button></div></div>
+          <div class="stepper" data-k="kids"><span class="t">Kids</span><div class="row"><button type="button" data-d="-1" aria-label="Fewer kids">−</button><output>1</output><button type="button" data-d="1" aria-label="More kids">+</button></div></div>
+        </div>
+
+        <label class="lbl" for="allergies">Allergies or dietary needs <span class="opt">(optional)</span></label>
+        <input type="text" id="allergies" name="allergies" placeholder="e.g. peanut allergy">
+      </div>
+
+      <label class="lbl" for="contact">Phone or email <span class="opt">(optional, for updates)</span></label>
+      <input type="text" id="contact" name="contact" autocomplete="email">
+
+      <label class="lbl" for="note">A note for the birthday kid <span class="opt">(optional)</span></label>
+      <textarea id="note" name="note" placeholder="Happy birthday!"></textarea>
+
+      <button class="submit" type="submit" id="submit">Send RSVP</button>
+      <div class="err" id="err" role="alert"></div>
+    </form>
+
+    <div class="thanks" aria-live="polite">
+      <div class="big" id="thanksEmoji">🎈</div>
+      <h2 id="thanksTitle">Thank you!</h2>
+      <p id="thanksMsg">We can't wait to celebrate with you.</p>
+      <button class="link-btn" id="change" type="button">Change my response</button>
+    </div>
+  </div>
+  <footer>Made with love for a very special birthday</footer>
+</main>
+
+<canvas id="confetti"></canvas>
+
+<script>
+/* ===================== EDIT THESE ===================== */
+const CONFIG = {
+  // Paste your Google Apps Script Web App URL here (see SETUP.md, step 2)
+  SCRIPT_URL: "PASTE_YOUR_WEB_APP_URL_HERE",
+  // Optional line under "Kindly RSVP". Leave "" to keep the default.
+  RSVP_BY: "",                       // e.g. "Please reply by November 1"
+  YES_MESSAGE: "We can't wait to celebrate with you!",
+  NO_MESSAGE: "We'll miss you! Thanks for letting us know.",
+};
+/* ====================================================== */
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+if (CONFIG.RSVP_BY) $('#rsvpBy').textContent = CONFIG.RSVP_BY;
+
+/* ---- Envelope open ---- */
+const intro = $('#intro');
+function openInvite(){
+  if (intro.classList.contains('opened')) return;
+  intro.classList.add('opened');
+  setTimeout(()=>{ document.body.classList.add('revealed'); burst(90); }, 900);
+}
+$('#env').addEventListener('click', openInvite);
+$('#env').addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); openInvite(); } });
+// Returning visitors skip the envelope
+if (store.get('rsvp_opened')) { intro.style.display='none'; document.body.classList.add('revealed'); }
+else store.set('rsvp_opened', true);
+
+/* ---- Form state ---- */
+const state = { attending:null, adults:1, kids:1 };
+document.querySelectorAll('.choice button').forEach(b => b.addEventListener('click', () => {
+  state.attending = b.dataset.v;
+  document.querySelectorAll('.choice button').forEach(x => x.setAttribute('aria-pressed', x===b));
+  $('#yesFields').classList.toggle('hide', state.attending !== 'Yes');
+  $('#err').textContent = '';
+}));
+document.querySelectorAll('.stepper').forEach(s => {
+  const k = s.dataset.k, out = s.querySelector('output');
+  s.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    state[k] = Math.max(0, Math.min(20, state[k] + Number(b.dataset.d)));
+    out.textContent = state[k];
+  }));
+});
+
+function showThanks(attending){
+  const yes = attending === 'Yes';
+  $('#thanksEmoji').textContent = yes ? '🎈' : '💌';
+  $('#thanksTitle').textContent = yes ? 'See you there!' : 'Thank you!';
+  $('#thanksMsg').textContent = yes ? CONFIG.YES_MESSAGE : CONFIG.NO_MESSAGE;
+  $('#card').classList.add('done');
+}
+const prior = store.get('rsvp_sent');
+if (prior) showThanks(prior.attending);
+$('#change').addEventListener('click', () => { $('#card').classList.remove('done'); $('#name').focus(); });
+
+$('#form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = $('#name').value.trim();
+  if (!name) { $('#err').textContent = 'Please add your name.'; $('#name').focus(); return; }
+  if (!state.attending) { $('#err').textContent = 'Please choose Yes or Can\'t make it.'; return; }
+  const yes = state.attending === 'Yes';
+  const data = {
+    name,
+    attending: state.attending,
+    adults: yes ? state.adults : 0,
+    kids: yes ? state.kids : 0,
+    allergies: yes ? $('#allergies').value.trim() : '',
+    contact: $('#contact').value.trim(),
+    note: $('#note').value.trim(),
+    updated: prior ? 'yes' : ''
+  };
+  const btn = $('#submit');
+  btn.disabled = true; btn.textContent = 'Sending…'; $('#err').textContent = '';
+  try {
+    if (CONFIG.SCRIPT_URL.startsWith('PASTE')) throw new Error('not configured');
+    await fetch(CONFIG.SCRIPT_URL, { method:'POST', mode:'no-cors', body:new URLSearchParams(data) });
+    store.set('rsvp_sent', { attending: state.attending });
+    showThanks(state.attending);
+    if (yes) burst(160);
+    window.scrollTo({ top: $('#card').offsetTop, behavior:'smooth' });
+  } catch(err) {
+    $('#err').textContent = 'Something went wrong. Please try again, or contact the host directly.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Send RSVP';
+  }
+});
+
+/* ---- Confetti ---- */
+const cv = $('#confetti'), cx = cv.getContext('2d');
+let parts = [], raf = null;
+function size(){ cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; }
+size(); addEventListener('resize', size);
+function burst(n){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  const colors = [accent, '#f7c948', '#5bc0be', '#9b7ede', '#ff9f68'];
+  for (let i=0;i<n;i++) parts.push({
+    x: cv.width/2 + (Math.random()-.5)*cv.width*.3, y: cv.height*.35,
+    vx:(Math.random()-.5)*14*devicePixelRatio, vy:(-Math.random()*16-6)*devicePixelRatio,
+    w:(6+Math.random()*6)*devicePixelRatio, h:(8+Math.random()*8)*devicePixelRatio,
+    r:Math.random()*6, vr:(Math.random()-.5)*.3, c:colors[i%colors.length], life:0
+  });
+  if (!raf) tick();
+}
+function tick(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  parts = parts.filter(p => p.y < cv.height + 40 && p.life < 400);
+  for (const p of parts){
+    p.life++; p.vy += .45*devicePixelRatio; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+    cx.save(); cx.translate(p.x,p.y); cx.rotate(p.r); cx.fillStyle=p.c; cx.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(p.r))); cx.restore();
+  }
+  raf = parts.length ? requestAnimationFrame(tick) : null;
+}
+</script>
+</body>
+</html>
